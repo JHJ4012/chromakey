@@ -8,8 +8,7 @@ class PreviewWindow(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.setFixedSize(1400, 800)
-        self.setWindowTitle('chroma key preview')
+        self.setFixedSize(1400,800)
 
         self.preview = QLabel(self)
         self.preview.setGeometry(100, 50, 1200, 550)
