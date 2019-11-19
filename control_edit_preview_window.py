@@ -36,3 +36,11 @@ class ControlWindow(QWidget):
         self.first_window = chromakey_first.MainWindow()
         self.close()
         self.first_window.show()
+
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, 'Window Close', 'You really want to close the window?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()

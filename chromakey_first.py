@@ -4,9 +4,9 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import control_edit_preview_window
 
-class MainWindow(QWidget):
+class MainWindow(QMainWindow):
     def __init__(self):
-        QWidget.__init__(self, None)
+        QMainWindow.__init__(self, None)
         self.initUI()
 
     def initUI(self):
