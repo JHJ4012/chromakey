@@ -82,6 +82,7 @@ class EditWindow(QWidget):
         self.slider_video1.sliderPressed.connect(lambda slider=self.slider_video1:self.pressSlider(slider))
         self.slider_video1.sliderReleased.connect(lambda slider=self.slider_video1:self.releaseSlider(slider))
         self.slider_video1.setDisabled(True)
+        self.slider_video1.setPageStep(0)
 
         self.start_video1.hide()
         self.stop_video1.hide()
@@ -126,6 +127,7 @@ class EditWindow(QWidget):
         self.slider_video2.sliderPressed.connect(lambda slider = self.slider_video2 : self.pressSlider(slider))
         self.slider_video2.sliderReleased.connect(lambda slider = self.slider_video2 : self.releaseSlider(slider))
         self.slider_video2.setDisabled(True)
+        self.slider_video2.setPageStep(0)
 
         self.start_video2.hide()
         self.stop_video2.hide()
@@ -241,9 +243,9 @@ class EditWindow(QWidget):
 
             elif self.radio1_video.isChecked():
                 fileName, _ = QFileDialog.getOpenFileName(self, "불러올 이미지 ㄱㄱ", "", "Video Files (*.mp4 *.avi)")
-
-                self.th1.get_info(fileName, 0, self)
-                self.th1.start()
+                if fileName:
+                    self.th1.get_info(fileName, 0, self)
+                    self.th1.start()
         elif button == self.for_file_btn2:
 
             if self.radio2_photo.isChecked():
@@ -261,9 +263,9 @@ class EditWindow(QWidget):
 
             elif self.radio2_video.isChecked():
                 fileName, _ = QFileDialog.getOpenFileName(self, "불러올 동영상 ㄱㄱ", "", "Video Files (*.mp4 *.avi)")
-
-                self.th2.get_info(fileName, 1, self)
-                self.th2.start()
+                if fileName:
+                    self.th2.get_info(fileName, 1, self)
+                    self.th2.start()
 
     #라디오 버튼에 연결되어 선택한 것 대로 위젯을 바꿔줌. 사진, 동영상에 맞게
     def change_mode(self, state, button):
@@ -295,21 +297,20 @@ class Thread(QThread):
         self.button = button
         self.edit = QWidget
         self.while_control = True
-        if self.fileName:
-            self.capture = cv2.VideoCapture(self.fileName)
-            self.fps = self.capture.get(cv2.CAP_PROP_FPS)
-            self.delay = int(1000 / self.fps)
-            if self.button == 0:
-                self.edit.slider_video1.setMaximum(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
-                self.edit.start_video1.setEnabled(True)
-                self.edit.stop_video1.setEnabled(True)
-                self.edit.slider_video1.setEnabled(True)
+        self.capture = cv2.VideoCapture(self.fileName)
+        self.fps = self.capture.get(cv2.CAP_PROP_FPS)
+        self.delay = int(1000 / self.fps)
+        if self.button == 0:
+            self.edit.slider_video1.setMaximum(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
+            self.edit.start_video1.setEnabled(True)
+            self.edit.stop_video1.setEnabled(True)
+            self.edit.slider_video1.setEnabled(True)
 
-            elif self.button == 1:
-                self.edit.slider_video2.setMaximum(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
-                self.edit.start_video2.setEnabled(True)
-                self.edit.stop_video2.setEnabled(True)
-                self.edit.slider_video2.setEnabled(True)
+        elif self.button == 1:
+            self.edit.slider_video2.setMaximum(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
+            self.edit.start_video2.setEnabled(True)
+            self.edit.stop_video2.setEnabled(True)
+            self.edit.slider_video2.setEnabled(True)
 
     def run(self):
         if self.capture:
