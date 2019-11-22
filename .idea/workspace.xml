@@ -4,10 +4,6 @@
     <list default="true" id="9f8a1847-c96a-45b8-8dd1-3b296ac2fc88" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/chromakey_edit.py" beforeDir="false" afterPath="$PROJECT_DIR$/chromakey_edit.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/chromakey_preview.py" beforeDir="false" afterPath="$PROJECT_DIR$/chromakey_preview.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/control_edit_preview_window.py" beforeDir="false" afterPath="$PROJECT_DIR$/control_edit_preview_window.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/image/background2.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/image/background3.jpg" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />

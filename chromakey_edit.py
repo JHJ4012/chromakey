@@ -65,6 +65,7 @@ class EditWindow(QWidget):
         self.start_video1.setIcon(QIcon('image/start.png'))
         self.start_video1.setIconSize(QSize(50,50))
         self.start_video1.setStyleSheet("border: 0px")
+        self.start_video1.setDisabled(True)
 
         self.stop_video1 = QPushButton(self)
         self.stop_video1.setGeometry(100,450,50,50)
@@ -73,14 +74,14 @@ class EditWindow(QWidget):
         self.stop_video1.setIcon(QIcon('image/stop.png'))
         self.stop_video1.setIconSize(QSize(50,50))
         self.stop_video1.setStyleSheet("border: 0px")
+        self.stop_video1.setDisabled(True)
 
         self.slider_video1 = QSlider(Qt.Horizontal, self)
         self.slider_video1.setGeometry(150,460,500,30)
         self.slider_video1.valueChanged.connect(lambda slider=self.slider_video1:self.changeValue(slider))
         self.slider_video1.sliderPressed.connect(lambda slider=self.slider_video1:self.pressSlider(slider))
         self.slider_video1.sliderReleased.connect(lambda slider=self.slider_video1:self.releaseSlider(slider))
-        # self.slider_video1.sliderPressed.connect(lambda state, slider = self.slider_video1 : self.press_Slider(state, slider))
-        # self.slider_video1.sliderReleased.connect(lambda state, slider = self.slider_video1 : self.release_Slider(state, slider))
+        self.slider_video1.setDisabled(True)
 
         self.start_video1.hide()
         self.stop_video1.hide()
@@ -108,6 +109,7 @@ class EditWindow(QWidget):
         self.start_video2.setIcon(QIcon('image/start.png'))
         self.start_video2.setIconSize(QSize(50,50))
         self.start_video2.setStyleSheet("border: 0px")
+        self.start_video2.setDisabled(True)
 
         self.stop_video2 = QPushButton(self)
         self.stop_video2.setGeometry(800,450,50,50)
@@ -116,12 +118,14 @@ class EditWindow(QWidget):
         self.stop_video2.setIcon(QIcon('image/stop.png'))
         self.stop_video2.setIconSize(QSize(50,50))
         self.stop_video2.setStyleSheet("border: 0px")
+        self.stop_video2.setDisabled(True)
 
         self.slider_video2 = QSlider(Qt.Horizontal, self)
         self.slider_video2.setGeometry(850,460,500,30)
         self.slider_video2.valueChanged.connect(lambda slider = self.slider_video2 : self.changeValue(slider))
         self.slider_video2.sliderPressed.connect(lambda slider = self.slider_video2 : self.pressSlider(slider))
         self.slider_video2.sliderReleased.connect(lambda slider = self.slider_video2 : self.releaseSlider(slider))
+        self.slider_video2.setDisabled(True)
 
         self.start_video2.hide()
         self.stop_video2.hide()
@@ -297,8 +301,15 @@ class Thread(QThread):
             self.delay = int(1000 / self.fps)
             if self.button == 0:
                 self.edit.slider_video1.setMaximum(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
+                self.edit.start_video1.setEnabled(True)
+                self.edit.stop_video1.setEnabled(True)
+                self.edit.slider_video1.setEnabled(True)
+
             elif self.button == 1:
                 self.edit.slider_video2.setMaximum(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
+                self.edit.start_video2.setEnabled(True)
+                self.edit.stop_video2.setEnabled(True)
+                self.edit.slider_video2.setEnabled(True)
 
     def run(self):
         if self.capture:
