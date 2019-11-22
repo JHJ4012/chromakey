@@ -26,8 +26,3 @@ class PreviewWindow(QWidget):
         self.store = QPushButton('저장',self)
         self.store.setGeometry(1200,725,100,50)
         self.store.setCursor(QCursor(Qt.PointingHandCursor))
-
-    # def backEdit(self):
-    #     self.hide()
-    #     self.edit = chromakey_edit.EditWindow()
-    #     self.edit.show()

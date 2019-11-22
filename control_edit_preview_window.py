@@ -33,9 +33,12 @@ class ControlWindow(QWidget):
         self.setWindowTitle('chroma key edit')
 
     def backToFirst(self):      #처음으로 돌아가면 작업 내용 초기화 해야되므로 self.close를 해줌. 나중에 진짜 나가시겠습니까? 라는 대화창 띄워주는 것 추가하기.
-        self.first_window = chromakey_first.MainWindow()
-        self.close()
-        self.first_window.show()
+        reply = QMessageBox.question(self, 'Back to First', 'You really want to back to First Window?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            self.first_window = chromakey_first.MainWindow()
+            self.hide()
+            self.first_window.show()        #back 했을 때에 no 누르면 first_window 뜸. 안 떠야됨
 
     def closeEvent(self, event):
         reply = QMessageBox.question(self, 'Window Close', 'You really want to close the window?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
