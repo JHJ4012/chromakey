@@ -53,11 +53,13 @@ class EditWindow(QWidget):
         self.img1.setGeometry(50,50,600,400)
         self.img1.setAlignment(Qt.AlignCenter)
         self.img1.setStyleSheet("font-size : 20pt; font-family : '휴먼편지체'; border : 1px solid")
+        self.img1.setCursor(QCursor(Qt.CrossCursor))
 
         self.video1 = QLabel("동영상을 불러와주세요",self)
         self.video1.setGeometry(50,50,600,400)
         self.video1.setAlignment(Qt.AlignCenter)
         self.video1.setStyleSheet("font-size : 20pt; font-family : '휴먼편지체'; border : 1px solid")
+        self.video1.setCursor(QCursor(Qt.CrossCursor))
 
         self.start_video1 = QPushButton(self)       #비디오 컨트롤러
         self.start_video1.setGeometry(50,450,50,50)
@@ -159,9 +161,13 @@ class EditWindow(QWidget):
         self.for_webcam2.setCursor(QCursor(Qt.PointingHandCursor))
         self.for_webcam2.setGeometry(1140,510,100,50)
 
-        self.select_color_btn = QPushButton('색', self)
-        self.select_color_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.select_color_btn.setGeometry(50, 510, 100, 50)
+        self.for_color_label = QLabel('배경색 : ', self)
+        self.for_color_label.setGeometry(50,510,100,50)
+        self.for_color_label.setAlignment(Qt.AlignCenter)
+
+        self.color_label = QLabel(self)
+        self.color_label.setGeometry(150, 510, 50, 50)
+        self.color_label.setStyleSheet("border : 1px solid")
 
         self.test_label1 = QLabel(self)
         self.test_label1.setGeometry(50, 570, 600, 150)
@@ -183,6 +189,24 @@ class EditWindow(QWidget):
 
         self.th1 = chromakey_thread.Thread(self)
         self.th2 = chromakey_thread.Thread(self)
+
+    def mousePressEvent(self, event):
+        if 50 <= event.pos().x() <= 650 and 50 <= event.pos().y() <= 450:
+            if self.radio1_photo.isChecked():
+                if self.img1.pixmap():
+                    x = event.pos().x() - 50
+                    y = event.pos().y() - 50
+                    for_color = self.for_pixmap1.pixel(x,y)
+                    color = QColor(for_color).getRgb()[:-1]
+                    self.color_label.setStyleSheet("border : 1px solid ; background: rgb" + str(color) + ';')
+            elif self.radio1_video.isChecked():
+                if self.video1.pixmap():
+                    x = event.pos().x() - 50
+                    y = event.pos().y() - 50
+                    for_color = self.th1.for_video_pixmap.pixel(x,y)
+                    color = QColor(for_color).getRgb()[:-1]
+                    self.color_label.setStyleSheet("border : 1px solid ; background: rgb" + str(color) + ';')
+
 
     def startVideo(self, state ,button):   #동영상 라디오 버튼 눌렀을 때 표시되고 동영상을 올리면 누르는거 가능하게.->누르기 전까지는 작동 안함.
                                             #start를 여기다가 함.
@@ -240,8 +264,8 @@ class EditWindow(QWidget):
                     cv2.cvtColor(cvImage1, cv2.COLOR_BGR2RGB, cvImage1)   #BGR을 RGB로 바꾸기
 
                     # dfdf = np.require(self.cvImage1, np.uint8, 'C')   #화질이 더 좋아진다는데 잘 모르겠음
-                    for_pixmap1 = QImage(cvImage1, width, height, byteValue, QImage.Format_RGB888)   #img1에 넣기
-                    pixmap_img1 = QPixmap.fromImage(for_pixmap1)
+                    self.for_pixmap1 = QImage(cvImage1, width, height, byteValue, QImage.Format_RGB888)   #img1에 넣기
+                    pixmap_img1 = QPixmap.fromImage(self.for_pixmap1)
                     self.img1.setPixmap(pixmap_img1)
 
             elif self.radio1_video.isChecked():
@@ -249,6 +273,7 @@ class EditWindow(QWidget):
                 if fileName:
                     self.th1.get_info(fileName, 0, self)
                     self.th1.start()
+
         elif button == self.for_file_btn2:
 
             if self.radio2_photo.isChecked():

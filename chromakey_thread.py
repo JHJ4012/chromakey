@@ -35,8 +35,8 @@ class Thread(QThread):
                 byteValue = byteValue * width
                 cv2.cvtColor(video_capture, cv2.COLOR_BGR2RGB, video_capture)
 
-                for_video_pixmap = QImage(video_capture, width, height, byteValue, QImage.Format_RGB888)
-                pixmap_video = QPixmap.fromImage(for_video_pixmap)
+                self.for_video_pixmap = QImage(video_capture, width, height, byteValue, QImage.Format_RGB888)
+                pixmap_video = QPixmap.fromImage(self.for_video_pixmap)
                 if self.button == 0:
                     self.edit.video1.setPixmap(pixmap_video)
                     self.edit.slider_video1.setValue(self.capture.get(cv2.CAP_PROP_POS_FRAMES))
