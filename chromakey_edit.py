@@ -2,6 +2,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import cv2
+import chromakey_thread, chromakey_first, chromakey_preview
 
 class EditWindow(QWidget):
     def __init__(self):
@@ -173,13 +174,15 @@ class EditWindow(QWidget):
         self.back_first_window = QPushButton('처음으로', self)
         self.back_first_window.setGeometry(50, 730, 100, 50)
         self.back_first_window.setCursor(QCursor(Qt.PointingHandCursor))
+        self.back_first_window.clicked.connect(self.backToFirst)
 
         self.complete_btn = QPushButton('완료', self)
         self.complete_btn.setGeometry(1250,730,100,50)
         self.complete_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.complete_btn.clicked.connect(self.goToPreview)
 
-        self.th1 = Thread(self)
-        self.th2 = Thread(self)
+        self.th1 = chromakey_thread.Thread(self)
+        self.th2 = chromakey_thread.Thread(self)
 
     def startVideo(self, state ,button):   #동영상 라디오 버튼 눌렀을 때 표시되고 동영상을 올리면 누르는거 가능하게.->누르기 전까지는 작동 안함.
                                             #start를 여기다가 함.
@@ -290,45 +293,22 @@ class EditWindow(QWidget):
             self.stop_video2.show()
             self.slider_video2.show()
 
-class Thread(QThread):
+    def backToFirst(self):      #처음으로 돌아가면 작업 내용 초기화 해야되므로 self.close를 해줌. 나중에 진짜 나가시겠습니까? 라는 대화창 띄워주는 것 추가하기.
+        reply = QMessageBox.question(self, 'Back to First', 'You really want to back to First Window?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
-    def get_info(self, fileName, button, QWidget):
-        self.fileName = fileName
-        self.button = button
-        self.edit = QWidget
-        self.while_control = True
-        self.capture = cv2.VideoCapture(self.fileName)
-        self.fps = self.capture.get(cv2.CAP_PROP_FPS)
-        self.delay = int(1000 / self.fps)
-        if self.button == 0:
-            self.edit.slider_video1.setMaximum(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
-            self.edit.start_video1.setEnabled(True)
-            self.edit.stop_video1.setEnabled(True)
-            self.edit.slider_video1.setEnabled(True)
+        if reply == QMessageBox.Yes:
+            self.first_window = chromakey_first.MainWindow()
+            self.hide()
+            self.first_window.show()        #back 했을 때에 no 누르면 first_window 뜸. 안 떠야됨
 
-        elif self.button == 1:
-            self.edit.slider_video2.setMaximum(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
-            self.edit.start_video2.setEnabled(True)
-            self.edit.stop_video2.setEnabled(True)
-            self.edit.slider_video2.setEnabled(True)
+    def goToPreview(self):              #preview로 갈 때 창이 꺼지지 않고 layout에서 widget이 바뀌는 형식으로 바꿈.
+        self.preview_window = chromakey_preview.PreviewWindow()
+        self.preview_window.show()
 
-    def run(self):
-        if self.capture:
-            while self.while_control:
-                if (self.capture.get(cv2.CAP_PROP_POS_FRAMES) == self.capture.get(cv2.CAP_PROP_FRAME_COUNT)):
-                    break
-                ret, frame = self.capture.read()
-                video_capture = cv2.resize(frame, (600, 400))
-                height, width, byteValue = video_capture.shape
-                byteValue = byteValue * width
-                cv2.cvtColor(video_capture, cv2.COLOR_BGR2RGB, video_capture)
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, 'Window Close', 'You really want to close the window?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
-                for_video_pixmap = QImage(video_capture, width, height, byteValue, QImage.Format_RGB888)
-                pixmap_video = QPixmap.fromImage(for_video_pixmap)
-                if self.button == 0:
-                    self.edit.video1.setPixmap(pixmap_video)
-                    self.edit.slider_video1.setValue(self.capture.get(cv2.CAP_PROP_POS_FRAMES))
-                elif self.button == 1:
-                    self.edit.video2.setPixmap(pixmap_video)
-                    self.edit.slider_video2.setValue(self.capture.get(cv2.CAP_PROP_POS_FRAMES))
-                cv2.waitKey(self.delay)
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()

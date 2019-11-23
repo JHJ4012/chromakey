@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-import control_edit_preview_window
+import chromakey_edit
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -25,9 +25,16 @@ class MainWindow(QMainWindow):
         self.chroma_start_btn.clicked.connect(self.goToEdit)
 
     def goToEdit(self):
-        self.control_edit_preview_window = control_edit_preview_window.ControlWindow()
-        self.close()
-        self.control_edit_preview_window.show()
+        self.hide()
+        chromakey_edit.EditWindow().show()
+
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, 'Window Close', 'You really want to close the window?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

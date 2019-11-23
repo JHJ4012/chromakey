@@ -21,8 +21,11 @@ class PreviewWindow(QWidget):
         self.back_edit = QPushButton('돌아가기',self)
         self.back_edit.setGeometry(100, 725, 100, 50)
         self.back_edit.setCursor(QCursor(Qt.PointingHandCursor))
-        # self.back_edit.clicked.connect(self.backEdit)
+        self.back_edit.clicked.connect(self.backToEdit)
 
         self.store = QPushButton('저장',self)
         self.store.setGeometry(1200,725,100,50)
         self.store.setCursor(QCursor(Qt.PointingHandCursor))
+
+    def backToEdit(self):
+        self.close()
