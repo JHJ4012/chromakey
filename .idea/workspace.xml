@@ -37,12 +37,12 @@
     </option>
   </component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="D:\workspace\Python\chromakey\image" />
-      <recent name="D:\workspace\Python\chromakey" />
-    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\workspace\Python\chromakey\UI" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\workspace\Python\chromakey" />
+      <recent name="D:\workspace\Python\chromakey\image" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -166,8 +166,8 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.chromakey_first" />
-        <item itemvalue="Python.chromakey_edit" />
         <item itemvalue="Python.test" />
+        <item itemvalue="Python.chromakey_edit" />
         <item itemvalue="Python.chromakey" />
         <item itemvalue="Python.test3" />
       </list>

@@ -2,6 +2,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import cv2
+import numpy as np
 import chromakey_thread, chromakey_first, chromakey_preview
 
 class EditWindow(QWidget):
@@ -16,15 +17,10 @@ class EditWindow(QWidget):
         self.group_box1 = QGroupBox(self)
         self.group_box1.setGeometry(250,10, 200, 40)
         self.group_box1.setStyleSheet("border : None")
-        self.group_box2 = QGroupBox(self)
-        self.group_box2.setGeometry(950,10, 200, 40)
-        self.group_box2.setStyleSheet("border : None")
 
         self.box_layout1 = QHBoxLayout()
-        self.box_layout2 = QHBoxLayout()
 
         self.group_box1.setLayout(self.box_layout1)
-        self.group_box2.setLayout(self.box_layout2)
 
         #라디오 버튼 설정
         self.radio1_photo = QRadioButton("사진")
@@ -37,15 +33,6 @@ class EditWindow(QWidget):
         self.box_layout1.addWidget(self.radio1_photo)
         self.box_layout1.addWidget(self.radio1_video)
 
-        self.radio2_photo = QRadioButton("사진")
-        self.radio2_video = QRadioButton("동영상")
-        self.radio2_photo.setChecked(True)
-        self.radio2_photo.clicked.connect(lambda state, button = self.radio2_photo : self.change_mode(state, button))
-        self.radio2_video.clicked.connect(lambda state, button = self.radio2_video : self.change_mode(state, button))
-        self.radio2_photo.setCursor(QCursor(Qt.PointingHandCursor))
-        self.radio2_video.setCursor(QCursor(Qt.PointingHandCursor))
-        self.box_layout2.addWidget(self.radio2_photo)
-        self.box_layout2.addWidget(self.radio2_video)
 
         self.st_layout1 = QStackedLayout()      #스택 레이아웃을 이용해 라디오 버튼이 사진일 때와 동영상일 때 바뀌도록.
 
@@ -94,53 +81,12 @@ class EditWindow(QWidget):
         self.st_layout1.addWidget(self.img1)
         self.st_layout1.addWidget(self.video1)
 
-        self.st_layout2 = QStackedLayout()      #스택 레이아웃을 이용해 라디오 버튼이 사진일 때와 동영상일 때 바뀌도록.
-
         self.img2 = QLabel("이미지를 불러와주세요",self)                #pixmap 넣기 위한 label
         self.img2.setGeometry(750,50,600,400)
         self.img2.setAlignment(Qt.AlignCenter)
         self.img2.setStyleSheet("font-size : 20pt; font-family : '휴먼편지체'; border : 1px solid")
 
-        self.video2 = QLabel("동영상을 불러와주세요",self)
-        self.video2.setGeometry(750,50,600,400)
-        self.video2.setAlignment(Qt.AlignCenter)
-        self.video2.setStyleSheet("font-size : 20pt; font-family : '휴먼편지체'; border : 1px solid")
-
-        self.start_video2 = QPushButton(self)       #비디오 컨트롤러
-        self.start_video2.setGeometry(750,450,50,50)
-        self.start_video2.clicked.connect(lambda state, button=self.start_video2: self.startVideo(state, button))
-        self.start_video2.setCursor(QCursor(Qt.PointingHandCursor))
-        self.start_video2.setIcon(QIcon('image/start.png'))
-        self.start_video2.setIconSize(QSize(50,50))
-        self.start_video2.setStyleSheet("border: 0px")
-        self.start_video2.setDisabled(True)
-
-        self.stop_video2 = QPushButton(self)
-        self.stop_video2.setGeometry(800,450,50,50)
-        self.stop_video2.clicked.connect(lambda state, button=self.stop_video2: self.stopVideo(state, button))
-        self.stop_video2.setCursor(QCursor(Qt.PointingHandCursor))
-        self.stop_video2.setIcon(QIcon('image/stop.png'))
-        self.stop_video2.setIconSize(QSize(50,50))
-        self.stop_video2.setStyleSheet("border: 0px")
-        self.stop_video2.setDisabled(True)
-
-        self.slider_video2 = QSlider(Qt.Horizontal, self)
-        self.slider_video2.setGeometry(850,460,500,30)
-        self.slider_video2.valueChanged.connect(lambda slider = self.slider_video2 : self.changeValue(slider))
-        self.slider_video2.sliderPressed.connect(lambda slider = self.slider_video2 : self.pressSlider(slider))
-        self.slider_video2.sliderReleased.connect(lambda slider = self.slider_video2 : self.releaseSlider(slider))
-        self.slider_video2.setDisabled(True)
-        self.slider_video2.setPageStep(0)
-
-        self.start_video2.hide()
-        self.stop_video2.hide()
-        self.slider_video2.hide()
-
-        self.st_layout2.addWidget(self.img2)
-        self.st_layout2.addWidget(self.video2)
-
-        self.st_layout1.setCurrentIndex(0)  #최초에 창을 켰을 때는 둘 다 사진으로 시작
-        self.st_layout2.setCurrentIndex(0)
+        self.st_layout1.setCurrentIndex(0)  #최초에 창을 켰을 때는 사진으로 시작
 
         #기본 버튼 GUI
         self.for_file_btn1 = QPushButton('불러오기', self)
@@ -182,30 +128,34 @@ class EditWindow(QWidget):
         self.back_first_window.setCursor(QCursor(Qt.PointingHandCursor))
         self.back_first_window.clicked.connect(self.backToFirst)
 
+        self.preview_btn = QPushButton('미리보기', self)
+        self.preview_btn.setGeometry(1140,730,100,50)
+        self.preview_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.preview_btn.clicked.connect(self.showPreview)
+
         self.complete_btn = QPushButton('완료', self)
-        self.complete_btn.setGeometry(1250,730,100,50)
+        self.complete_btn.setGeometry(1250, 730, 100, 50)
         self.complete_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.complete_btn.clicked.connect(self.goToPreview)
 
         self.th1 = chromakey_thread.Thread(self)
-        self.th2 = chromakey_thread.Thread(self)
 
     def mousePressEvent(self, event):
         if 50 <= event.pos().x() <= 650 and 50 <= event.pos().y() <= 450:
             if self.radio1_photo.isChecked():
                 if self.img1.pixmap():
-                    x = event.pos().x() - 50
-                    y = event.pos().y() - 50
-                    for_color = self.for_pixmap1.pixel(x,y)
-                    color = QColor(for_color).getRgb()[:-1]
-                    self.color_label.setStyleSheet("border : 1px solid ; background: rgb" + str(color) + ';')
+                    self.x = event.pos().x() - 50
+                    self.y = event.pos().y() - 50
+                    for_color = self.for_pixmap1.pixel(self.x,self.y)
+                    self.color_photo = QColor(for_color).getHsv()[:-1]
+                    self.color_label.setStyleSheet("border : 1px solid ; background: hsv" + str(self.color_photo) + ';')
+                    print(self.color_photo)
             elif self.radio1_video.isChecked():
                 if self.video1.pixmap():
-                    x = event.pos().x() - 50
-                    y = event.pos().y() - 50
-                    for_color = self.th1.for_video_pixmap.pixel(x,y)
-                    color = QColor(for_color).getRgb()[:-1]
-                    self.color_label.setStyleSheet("border : 1px solid ; background: rgb" + str(color) + ';')
+                    self.x = event.pos().x() - 50
+                    self.y = event.pos().y() - 50
+                    for_color = self.th1.for_video_pixmap.pixel(self.x,self.y)
+                    self.color_video = QColor(for_color).getHsv()[:-1]
+                    self.color_label.setStyleSheet("border : 1px solid ; background: hsv" + str(self.color_video) + ';')
 
 
     def startVideo(self, state ,button):   #동영상 라디오 버튼 눌렀을 때 표시되고 동영상을 올리면 누르는거 가능하게.->누르기 전까지는 작동 안함.
@@ -215,39 +165,20 @@ class EditWindow(QWidget):
             if self.th1.capture.get(cv2.CAP_PROP_POS_FRAMES) == self.th1.capture.get(cv2.CAP_PROP_FRAME_COUNT):
                 self.th1.capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
             self.th1.start()
-        elif button == self.start_video2:
-            self.th2.while_control = True
-            if self.th2.capture.get(cv2.CAP_PROP_POS_FRAMES) == self.th2.capture.get(cv2.CAP_PROP_FRAME_COUNT):
-                self.th2.capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            self.th2.start()
 
     def stopVideo(self, state, button):
-        if button == self.stop_video1:
-            self.th1.while_control = False
-        elif button == self.stop_video2:
-            self.th2.while_control = False
+        self.th1.while_control = False
 
     def changeValue(self, slider):
-        if slider == self.slider_video1:
-            print(self.slider_video1.value())
-        elif slider == self.slider_video2:
-            print(self.slider_video2.value())
+        print(self.slider_video1.value())
 
     def pressSlider(self, slider):
-        if slider == self.slider_video1:
-            self.th1.while_control = False
-        elif slider == self.slider_video2:
-            self.th2.while_control = False
+        self.th1.while_control = False
 
     def releaseSlider(self, slider):
-        if slider == self.slider_video1:
-            self.th1.capture.set(cv2.CAP_PROP_POS_FRAMES, self.slider_video1.value())
-            self.th1.while_control = True
-            self.th1.start()
-        elif slider == self.slider_video2:
-            self.th2.capture.set(cv2.CAP_PROP_POS_FRAMES, self.slider_video2.value())
-            self.th2.while_control = True
-            self.th2.start()
+        self.th1.capture.set(cv2.CAP_PROP_POS_FRAMES, self.slider_video1.value())
+        self.th1.while_control = True
+        self.th1.start()
 
     #opencv를 이용해 화질을 더 좋게 변경
     def openFile(self, state, button):
@@ -257,8 +188,8 @@ class EditWindow(QWidget):
                 fileName, _ = QFileDialog.getOpenFileName(self, "불러올 이미지 ㄱㄱ", "", "Image Files (*.jpg *.png)")
 
                 if fileName:
-                    for_cvImage1 = cv2.imread(fileName)                    #opencv로 파일 불러옴
-                    cvImage1 = cv2.resize(for_cvImage1, (600,400))    #불러온 파일 resize
+                    self.for_cvImage1 = cv2.imread(fileName)                    #opencv로 파일 불러옴
+                    cvImage1 = cv2.resize(self.for_cvImage1, (600,400))    #불러온 파일 resize
                     height, width, byteValue = cvImage1.shape              #불러온 파일 정보 변수에 담기
                     byteValue = byteValue * width
                     cv2.cvtColor(cvImage1, cv2.COLOR_BGR2RGB, cvImage1)   #BGR을 RGB로 바꾸기
@@ -269,31 +200,24 @@ class EditWindow(QWidget):
                     self.img1.setPixmap(pixmap_img1)
 
             elif self.radio1_video.isChecked():
-                fileName, _ = QFileDialog.getOpenFileName(self, "불러올 이미지 ㄱㄱ", "", "Video Files (*.mp4 *.avi)")
-                if fileName:
-                    self.th1.get_info(fileName, 0, self)
+                self.fileName1, _ = QFileDialog.getOpenFileName(self, "불러올 이미지 ㄱㄱ", "", "Video Files (*.mp4 *.avi)")
+                if self.fileName1:
+                    self.th1.get_info(self.fileName1, self)
                     self.th1.start()
 
         elif button == self.for_file_btn2:
 
-            if self.radio2_photo.isChecked():
-                fileName, _ = QFileDialog.getOpenFileName(self, "불러올 이미지 ㄱㄱ", "", "Image Files (*.jpg *.png)")
-                if fileName:
-                    for_cvImage2 = cv2.imread(fileName)
-                    cvImage2 = cv2.resize(for_cvImage2, (600,400))
-                    height, width, byteValue = cvImage2.shape
-                    byteValue = byteValue * width
-                    cv2.cvtColor(cvImage2, cv2.COLOR_BGR2RGB, cvImage2)
+            fileName, _ = QFileDialog.getOpenFileName(self, "불러올 이미지 ㄱㄱ", "", "Image Files (*.jpg *.png)")
+            if fileName:
+                self.for_cvImage2 = cv2.imread(fileName)
+                cvImage2 = cv2.resize(self.for_cvImage2, (600,400))
+                height, width, byteValue = cvImage2.shape
+                byteValue = byteValue * width
+                cv2.cvtColor(cvImage2, cv2.COLOR_BGR2RGB, cvImage2)
 
-                    for_pixmap2 = QImage(cvImage2, width, height, byteValue, QImage.Format_RGB888)
-                    pixmap_img2 = QPixmap.fromImage(for_pixmap2)
-                    self.img2.setPixmap(pixmap_img2)
-
-            elif self.radio2_video.isChecked():
-                fileName, _ = QFileDialog.getOpenFileName(self, "불러올 동영상 ㄱㄱ", "", "Video Files (*.mp4 *.avi)")
-                if fileName:
-                    self.th2.get_info(fileName, 1, self)
-                    self.th2.start()
+                for_pixmap2 = QImage(cvImage2, width, height, byteValue, QImage.Format_RGB888)
+                pixmap_img2 = QPixmap.fromImage(for_pixmap2)
+                self.img2.setPixmap(pixmap_img2)
 
     #라디오 버튼에 연결되어 선택한 것 대로 위젯을 바꿔줌. 사진, 동영상에 맞게
     def change_mode(self, state, button):
@@ -307,16 +231,6 @@ class EditWindow(QWidget):
             self.start_video1.show()
             self.stop_video1.show()
             self.slider_video1.show()
-        elif button == self.radio2_photo:
-            self.st_layout2.setCurrentIndex(0)
-            self.start_video2.hide()
-            self.stop_video2.hide()
-            self.slider_video2.hide()
-        elif button == self.radio2_video:
-            self.st_layout2.setCurrentIndex(1)
-            self.start_video2.show()
-            self.stop_video2.show()
-            self.slider_video2.show()
 
     def backToFirst(self):      #처음으로 돌아가면 작업 내용 초기화 해야되므로 self.close를 해줌. 나중에 진짜 나가시겠습니까? 라는 대화창 띄워주는 것 추가하기.
         reply = QMessageBox.question(self, 'Back to First', 'You really want to back to First Window?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -326,9 +240,10 @@ class EditWindow(QWidget):
             self.hide()
             self.first_window.show()        #back 했을 때에 no 누르면 first_window 뜸. 안 떠야됨
 
-    def goToPreview(self):              #preview로 갈 때 창이 꺼지지 않고 layout에서 widget이 바뀌는 형식으로 바꿈.
-        self.preview_window = chromakey_preview.PreviewWindow()
-        self.preview_window.show()
+    def showPreview(self):              #preview로 갈 때 창이 꺼지지 않고 layout에서 widget이 바뀌는 형식으로 바꿈.
+        # self.preview_window = chromakey_preview.PreviewWindow()
+        # self.preview_window.show()
+        self.make_Chromakey()
 
     def closeEvent(self, event):
         reply = QMessageBox.question(self, 'Window Close', 'You really want to close the window?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -337,3 +252,84 @@ class EditWindow(QWidget):
             event.accept()
         else:
             event.ignore()
+
+    def make_Chromakey(self):
+        if self.radio1_photo.isChecked():
+            main_img = self.for_cvImage1
+            background_img = self.for_cvImage2
+            main_img = cv2.resize(main_img, (600, 400))
+            background_img = cv2.resize(background_img, (600, 400))
+            height1, width1 = main_img.shape[:2]
+            height2, width2 = background_img.shape[:2]
+            x = (width2 - width1) // 2
+            y = height2 - height1
+            w = x + width1
+            h = y + height1
+            # 뭔가 되긴 하는데 잘 안됨. 범위 이상한듯.
+            # HSV로 바꾸니까 색깔이 반전되서 다른 색이 되버림. 그래서 안 되는거.
+            # 배경색을 빨강, 초록, 파랑으로 제한시키는것은??
+            offset = 20
+            chromakey = main_img[self.y:self.y + 1, self.x:self.x + 1, :]
+
+            hsv_chroma = cv2.cvtColor(chromakey, cv2.COLOR_BGR2HSV)
+            hsv_img = cv2.cvtColor(main_img, cv2.COLOR_BGR2HSV)
+
+            chroma_h = hsv_chroma[:, :, 0]
+            lower = np.array([chroma_h.min() - offset, 40, 40])
+            upper = np.array([chroma_h.max() + offset, 255, 255])
+            mask = cv2.inRange(hsv_img, lower, upper)  # 대충 초록 파랑 빨강은 제대로 되는 것 같음.
+            # mask = cv2.inRange(hsv_img, (0,0,0), (180,255,30)) #검은색
+            cv2.imshow('dffd', mask)
+            mask_inv = cv2.bitwise_not(mask)
+            roi = background_img[y:h, x:w]
+            fg = cv2.bitwise_and(main_img, main_img, mask=mask_inv)
+            bg = cv2.bitwise_and(roi, roi, mask=mask)
+            background_img[y:h, x:w] = fg + bg
+            cv2.imshow('dfdf', background_img)
+
+        elif self.radio1_video.isChecked():
+            background_img = self.for_cvImage2
+            background_img = cv2.resize(background_img, (600, 400))
+            cap = cv2.VideoCapture(self.fileName1)
+            print('시작')
+            if cap.isOpened():
+                fps = cap.get(cv2.CAP_PROP_FPS)
+                delay = int(1000 / fps)
+
+                while True:
+                    ret, img = cap.read()
+                    if ret:
+                        for_img = cv2.resize(img, (600, 400))
+                        height1, width1 = for_img.shape[:2]
+                        height2, width2 = background_img.shape[:2]
+                        x = (width2 - width1) // 2
+                        y = height2 - height1
+                        w = x + width1
+                        h = y + height1
+                        # 뭔가 되긴 하는데 잘 안됨. 범위 이상한듯.
+                        # HSV로 바꾸니까 색깔이 반전되서 다른 색이 되버림. 그래서 안 되는거.
+                        # 배경색을 빨강, 초록, 파랑으로 제한시키는것은??
+                        offset = 20
+                        chromakey = for_img[self.y:self.y + 1, self.x:self.x + 1, :]
+
+                        hsv_chroma = cv2.cvtColor(chromakey, cv2.COLOR_BGR2HSV)
+                        hsv_img = cv2.cvtColor(for_img, cv2.COLOR_BGR2HSV)
+
+                        chroma_h = hsv_chroma[:, :, 0]
+                        lower = np.array([chroma_h.min() - offset, 40, 40])
+                        upper = np.array([chroma_h.max() + offset, 255, 255])
+                        mask = cv2.inRange(hsv_img, lower, upper)  # 대충 초록 파랑 빨강은 제대로 되는 것 같음.
+                        # mask = cv2.inRange(hsv_img, (0,0,0), (180,255,30)) #검은색
+                        mask_inv = cv2.bitwise_not(mask)
+                        roi = background_img[y:h, x:w]
+                        fg = cv2.bitwise_and(for_img, for_img, mask=mask_inv)
+                        bg = cv2.bitwise_and(roi, roi, mask=mask)
+                        for_img[y:h, x:w] = fg + bg
+                        cv2.imshow('dfdf', for_img)
+                        cv2.waitKey(delay)
+                    else:
+                         break
+            else:
+                print("can't open video")
+            cap.release()
+            cap.destroyAllWindows()
