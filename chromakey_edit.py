@@ -3,7 +3,8 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import cv2
 import numpy as np
-import chromakey_thread, chromakey_first, chromakey_preview
+import chromakey_thread, chromakey_first
+import cv2, datetime, os
 
 class EditWindow(QWidget):
     def __init__(self):
@@ -102,6 +103,7 @@ class EditWindow(QWidget):
         self.for_webcam1 = QPushButton('촬영', self)
         self.for_webcam1.setCursor(QCursor(Qt.PointingHandCursor))
         self.for_webcam1.setGeometry(440,510,100,50)
+        self.for_webcam1.clicked.connect(lambda state, button=self.for_webcam1: self.openWebcam(state, button))
 
         self.for_webcam2 = QPushButton('촬영', self)
         self.for_webcam2.setCursor(QCursor(Qt.PointingHandCursor))
@@ -123,6 +125,27 @@ class EditWindow(QWidget):
         self.test_label2.setGeometry(750, 570, 600, 150)
         self.test_label2.setStyleSheet("background-color : red")
 
+        self.func1 = QPushButton('블러처리', self)
+        self.func1.setCursor(QCursor(Qt.PointingHandCursor))
+        self.func1.setGeometry(750, 570, 100, 50)
+        self.func1.clicked.connect(lambda state, button=self.func1: self.effects(state, button))
+        self.func1.setDisabled(True)  # 처음에 실행 했을 때 오른쪽 레이아웃에 사진이나 동영상이 없어서 비활성화
+
+        self.for_cap1 = QPushButton('사진 찍기', self)
+        self.for_cap1.setCursor(QCursor(Qt.PointingHandCursor))
+        self.for_cap1.setGeometry(330, 730, 100, 50)
+        self.for_cap1.clicked.connect(lambda state, button=self.for_cap1: self.capture(state, button))
+
+        self.for_rec1 = QPushButton('녹화 시작', self)
+        self.for_rec1.setCursor(QCursor(Qt.PointingHandCursor))
+        self.for_rec1.setGeometry(440, 730, 100, 50)
+        self.for_rec1.clicked.connect(lambda state, button=self.for_rec1: self.capture(state, button))
+
+        self.rec_stop1 = QPushButton('녹화 종료', self)
+        self.rec_stop1.setCursor(QCursor(Qt.PointingHandCursor))
+        self.rec_stop1.setGeometry(550, 730, 100, 50)
+        self.rec_stop1.clicked.connect(lambda state, button=self.rec_stop1: self.capture(state, button))
+
         self.back_first_window = QPushButton('처음으로', self)
         self.back_first_window.setGeometry(50, 730, 100, 50)
         self.back_first_window.setCursor(QCursor(Qt.PointingHandCursor))
@@ -137,7 +160,11 @@ class EditWindow(QWidget):
         self.complete_btn.setGeometry(1250, 730, 100, 50)
         self.complete_btn.setCursor(QCursor(Qt.PointingHandCursor))
 
-        self.th1 = chromakey_thread.Thread(self)
+        self.for_cap1.hide()
+        self.for_rec1.hide()
+        self.rec_stop1.hide()
+
+        self.th1 = chromakey_thread.Thread(self)    #비디오 불러오기
 
     def mousePressEvent(self, event):
         if 50 <= event.pos().x() <= 650 and 50 <= event.pos().y() <= 450:
@@ -207,9 +234,9 @@ class EditWindow(QWidget):
 
         elif button == self.for_file_btn2:
 
-            fileName, _ = QFileDialog.getOpenFileName(self, "불러올 이미지 ㄱㄱ", "", "Image Files (*.jpg *.png)")
-            if fileName:
-                self.for_cvImage2 = cv2.imread(fileName)
+            self.fileName, _ = QFileDialog.getOpenFileName(self, "불러올 이미지 ㄱㄱ", "", "Image Files (*.jpg *.png)")
+            if self.fileName:
+                self.for_cvImage2 = cv2.imread(self.fileName)
                 cvImage2 = cv2.resize(self.for_cvImage2, (600,400))
                 height, width, byteValue = cvImage2.shape
                 byteValue = byteValue * width
@@ -218,6 +245,88 @@ class EditWindow(QWidget):
                 for_pixmap2 = QImage(cvImage2, width, height, byteValue, QImage.Format_RGB888)
                 pixmap_img2 = QPixmap.fromImage(for_pixmap2)
                 self.img2.setPixmap(pixmap_img2)
+                self.func1.setDisabled(False)
+
+    def openWebcam(self, state, button):  # 카메라 켜기
+        if button == self.for_webcam1:
+            # self.radio1_camera.setChecked(True)
+            # self.change_mode(True, self.radio1_camera)
+            self.radio1_photo.setDisabled(True)
+            self.radio1_video.setChecked(True)
+            self.change_mode(True, self.radio1_video)
+
+            self.for_cap1.show()
+            self.for_rec1.show()
+            self.rec_stop1.show()
+            self.rec_stop1.setDisabled(True)
+            self.for_file_btn1.setDisabled(True)
+
+            self.th1.get_info(0, self)
+            self.th1.start()
+
+    def capture(self, state, button):
+        now = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        photo_path = os.path.join("D:/test/" + str(now) + ".png")
+        video_path = os.path.join("D:/test/" + str(now) + ".avi")
+
+        # 왼쪽
+        if button == self.for_cap1:  # 캡쳐
+            cap = self.th1.capture_camera(photo_path)
+            self.radio1_photo.setDisabled(False)
+            self.radio1_photo.setChecked(True)
+            self.change_mode(True, self.radio1_photo)
+            self.th1.terminate()
+            self.video1.setText("동영상을 불러와주세요")
+            self.getPath(cap)
+
+        elif button == self.for_rec1:  # 녹화 시작
+            self.rec = self.th1.record_camera(video_path)
+            self.rec_stop1.setDisabled(False)
+
+        elif button == self.rec_stop1:  # 녹화 종료
+            self.th1.stop_record()
+            self.getPath(self.rec)
+
+    def getPath(self, path):  # webcam에서 저장한 파일 경로 받아서 화면에 적용
+
+        control = path.split('.')[1]
+        if control == 'png':
+            self.fileName = path
+        elif control == 'avi':
+            self.fileName1 = path
+
+        if control == 'png':  # 사진 찍었을 때
+            self.for_cvImage1 = cv2.imread(self.fileName)  # opencv로 파일 불러옴
+            cvImage1 = cv2.resize(self.for_cvImage1, (600, 400))
+            height, width, byteValue = cvImage1.shape  # 불러온 파일 정보 변수에 담기
+            byteValue = byteValue * width
+            cv2.cvtColor(cvImage1, cv2.COLOR_BGR2RGB, cvImage1)  # BGR을 RGB로 바꾸기
+
+            self.for_pixmap1 = QImage(cvImage1, width, height, byteValue, QImage.Format_RGB888)  # img1에 넣기
+            pixmap_img1 = QPixmap.fromImage(self.for_pixmap1)
+            self.img1.setPixmap(pixmap_img1)
+
+        elif control == 'avi':  # 동영상 찍었을 때
+            self.radio1_photo.setDisabled(False)
+            self.radio1_video.setChecked(True)
+            self.change_mode(True, self.radio1_video)
+            self.th1.get_info(self.fileName1,self)
+            self.th1.start()
+
+    def effects(self, state, button):
+        if button == self.func1:
+            for_cvImage1 = cv2.imread(self.fileName)
+            cvImage1 = cv2.resize(for_cvImage1, (600, 400))
+            height, width, byteValue = cvImage1.shape
+            byteValue = byteValue * width
+            cv2.cvtColor(cvImage1, cv2.COLOR_BGR2RGB, cvImage1)
+
+            img_paint = cv2.blur(cvImage1, (10, 10))
+            self.for_cvImage2 = cv2.cvtColor(img_paint, cv2.COLOR_RGB2BGR)
+
+            self.for_pixmap2 = QImage(img_paint, width, height, byteValue, QImage.Format_RGB888)
+            pixmap_img2 = QPixmap.fromImage(self.for_pixmap2)
+            self.img2.setPixmap(pixmap_img2)
 
     #라디오 버튼에 연결되어 선택한 것 대로 위젯을 바꿔줌. 사진, 동영상에 맞게
     def change_mode(self, state, button):
@@ -226,11 +335,19 @@ class EditWindow(QWidget):
             self.start_video1.hide()
             self.stop_video1.hide()
             self.slider_video1.hide()
+            self.for_cap1.hide()
+            self.for_rec1.hide()
+            self.rec_stop1.hide()
+            self.for_file_btn1.setDisabled(False)
         elif button == self.radio1_video:
             self.st_layout1.setCurrentIndex(1)
             self.start_video1.show()
             self.stop_video1.show()
             self.slider_video1.show()
+            self.for_cap1.hide()
+            self.for_rec1.hide()
+            self.rec_stop1.hide()
+            self.for_file_btn1.setDisabled(False)
 
     def backToFirst(self):      #처음으로 돌아가면 작업 내용 초기화 해야되므로 self.close를 해줌. 나중에 진짜 나가시겠습니까? 라는 대화창 띄워주는 것 추가하기.
         reply = QMessageBox.question(self, 'Back to First', 'You really want to back to First Window?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
