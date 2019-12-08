@@ -414,6 +414,8 @@ class EditWindow(QWidget):
                 delay = int(1000 / fps)
 
                 while True:
+                    if (cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT)):
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     ret, img = cap.read()
                     if ret:
                         for_img = cv2.resize(img, (600, 400))
@@ -428,6 +430,7 @@ class EditWindow(QWidget):
                         # 배경색을 빨강, 초록, 파랑으로 제한시키는것은??
                         offset = 20
                         chromakey = for_img[self.y:self.y + 1, self.x:self.x + 1, :]
+                        # chromakey = for_img[0:10, 0:10, :]
 
                         hsv_chroma = cv2.cvtColor(chromakey, cv2.COLOR_BGR2HSV)
                         hsv_img = cv2.cvtColor(for_img, cv2.COLOR_BGR2HSV)
@@ -443,10 +446,12 @@ class EditWindow(QWidget):
                         bg = cv2.bitwise_and(roi, roi, mask=mask)
                         for_img[y:h, x:w] = fg + bg
                         cv2.imshow('dfdf', for_img)
-                        cv2.waitKey(delay)
+                        k = cv2.waitKey(delay) & 0xFF
+                        if k == 27:
+                            break
                     else:
                          break
             else:
                 print("can't open video")
             cap.release()
-            cap.destroyAllWindows()
+            # cap.destroyAllWindows()
