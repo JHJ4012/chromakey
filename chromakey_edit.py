@@ -11,7 +11,7 @@ class EditWindow(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.setFixedSize(1400,800)
+        self.setFixedSize(1400,700)
 
         #라디오 버튼 묶을 GroupBox
         self.group_box1 = QGroupBox(self)
@@ -113,17 +113,13 @@ class EditWindow(QWidget):
         self.for_color_label.setGeometry(50,510,100,50)
         self.for_color_label.setAlignment(Qt.AlignCenter)
 
-        self.color_label = QLabel(self)
+        self.color_label = QLabel(self)                     #배경색 나올 라벨
         self.color_label.setGeometry(150, 510, 50, 50)
         self.color_label.setStyleSheet("border : 1px solid")
 
-        self.test_label1 = QLabel(self)
-        self.test_label1.setGeometry(50, 570, 600, 150)
-        self.test_label1.setStyleSheet("background-color : red")
-
-        self.test_label2 = QLabel(self)
-        self.test_label2.setGeometry(750, 570, 600, 150)
-        self.test_label2.setStyleSheet("background-color : red")
+        self.for_black_color = QCheckBox('배경색이 검은색일 경우 선택', self)
+        self.for_black_color.setGeometry(220,510, 200 ,50)
+        self.for_black_color.stateChanged.connect(self.change_black)
 
         self.func1 = QPushButton('블러처리', self)
         self.func1.setCursor(QCursor(Qt.PointingHandCursor))
@@ -139,41 +135,45 @@ class EditWindow(QWidget):
 
         self.for_cap1 = QPushButton('사진 찍기', self)
         self.for_cap1.setCursor(QCursor(Qt.PointingHandCursor))
-        self.for_cap1.setGeometry(330, 730, 100, 50)
+        self.for_cap1.setGeometry(330, 630, 100, 50)
         self.for_cap1.clicked.connect(lambda state, button=self.for_cap1: self.capture(state, button))
 
         self.for_cap2 = QPushButton('사진 찍기', self)
         self.for_cap2.setCursor(QCursor(Qt.PointingHandCursor))
-        self.for_cap2.setGeometry(750, 730, 100, 50)
+        self.for_cap2.setGeometry(750, 630, 100, 50)
         self.for_cap2.clicked.connect(lambda state, button=self.for_cap2: self.capture(state, button))
 
         self.for_rec1 = QPushButton('녹화 시작', self)
         self.for_rec1.setCursor(QCursor(Qt.PointingHandCursor))
-        self.for_rec1.setGeometry(440, 730, 100, 50)
+        self.for_rec1.setGeometry(440, 630, 100, 50)
         self.for_rec1.clicked.connect(lambda state, button=self.for_rec1: self.capture(state, button))
 
         self.rec_stop1 = QPushButton('녹화 종료', self)
         self.rec_stop1.setCursor(QCursor(Qt.PointingHandCursor))
-        self.rec_stop1.setGeometry(550, 730, 100, 50)
+        self.rec_stop1.setGeometry(550, 630, 100, 50)
         self.rec_stop1.clicked.connect(lambda state, button=self.rec_stop1: self.capture(state, button))
 
         self.back_first_window = QPushButton('처음으로', self)
-        self.back_first_window.setGeometry(50, 730, 100, 50)
+        self.back_first_window.setGeometry(50, 630, 100, 50)
         self.back_first_window.setCursor(QCursor(Qt.PointingHandCursor))
         self.back_first_window.clicked.connect(self.backToFirst)
 
         self.preview_btn = QPushButton('미리보기', self)
-        self.preview_btn.setGeometry(1140,730,100,50)
+        self.preview_btn.setGeometry(1140,630,100,50)
         self.preview_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.preview_btn.clicked.connect(lambda state, button=self.preview_btn: self.make_Chromakey(state, button))
 
         self.complete_btn = QPushButton('저장', self)
-        self.complete_btn.setGeometry(1250, 730, 100, 50)
+        self.complete_btn.setGeometry(1250, 630, 100, 50)
         self.complete_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.complete_btn.clicked.connect(lambda state, button=self.complete_btn: self.make_Chromakey(state, button))
 
         self.error_label = QLabel('', self)
-        self.error_label.setGeometry(860, 730, 270, 50)
+        self.error_label.setGeometry(860, 630, 270, 50)
+
+        self.notice_label = QLabel("영상의 화질이나 색의 선명도, 명암 등에 따라 성능이 차이날 수 있습니다.", self)
+        self.notice_label.setGeometry(500, 580 ,400, 40)
+        self.notice_label.setStyleSheet("color : red")
 
         self.for_cap1.hide()
         self.for_cap2.hide()
@@ -202,7 +202,7 @@ class EditWindow(QWidget):
                     for_color = self.th1.for_video_pixmap.pixel(self.x,self.y)
                     self.color_video = QColor(for_color).getHsv()[:-1]
                     self.color_label.setStyleSheet("border : 1px solid ; background: hsv" + str(self.color_video) + ';')
-
+                    self.chromakey = self.th1.frame[self.y:self.y + 1, self.x:self.x + 1, :]
 
     def startVideo(self, state ,button):   #동영상 라디오 버튼 눌렀을 때 표시되고 동영상을 올리면 누르는거 가능하게.->누르기 전까지는 작동 안함.
                                             #start를 여기다가 함.
@@ -225,6 +225,12 @@ class EditWindow(QWidget):
         self.th1.capture.set(cv2.CAP_PROP_POS_FRAMES, self.slider_video1.value())
         self.th1.while_control = True
         self.th1.start()
+
+    def change_black(self):
+        if self.for_black_color.isChecked():
+            self.color_label.setStyleSheet("border : 1px solid ; background: black;")
+        else:
+            self.color_label.setStyleSheet("border : 1px solid ; background: none;")
 
     #opencv를 이용해 화질을 더 좋게 변경
     def openFile(self, state, button):
@@ -397,6 +403,8 @@ class EditWindow(QWidget):
             self.for_rec1.hide()
             self.rec_stop1.hide()
             self.for_file_btn1.setDisabled(False)
+            self.color_label.setStyleSheet("border : 1px solid ; background: none;")
+            self.for_black_color.setChecked(False)
         elif button == self.radio1_video:
             self.st_layout1.setCurrentIndex(1)
             self.start_video1.show()
@@ -406,6 +414,8 @@ class EditWindow(QWidget):
             self.for_rec1.hide()
             self.rec_stop1.hide()
             self.for_file_btn1.setDisabled(False)
+            self.color_label.setStyleSheet("border : 1px solid ; background: none;")
+            self.for_black_color.setChecked(False)
 
     def backToFirst(self):      #처음으로 돌아가면 작업 내용 초기화 해야되므로 self.close를 해줌. 나중에 진짜 나가시겠습니까? 라는 대화창 띄워주는 것 추가하기.
         reply = QMessageBox.question(self, 'Back to First', 'You really want to back to First Window?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -460,8 +470,10 @@ class EditWindow(QWidget):
             chroma_h = hsv_chroma[:, :, 0]
             lower = np.array([chroma_h.min() - offset, 40, 40])
             upper = np.array([chroma_h.max() + offset, 255, 255])
-            mask = cv2.inRange(hsv_img, lower, upper)  # 대충 초록 파랑 빨강은 제대로 되는 것 같음.
-            # mask = cv2.inRange(hsv_img, (0,0,0), (180,255,30)) #검은색
+            if self.for_black_color.isChecked():
+                mask = cv2.inRange(hsv_img, (0,0,0), (180,255,30)) #검은색
+            else:
+                mask = cv2.inRange(hsv_img, lower, upper)  # 대충 초록 파랑 빨강은 제대로 되는 것 같음.
             # cv2.imshow('dffd', mask)
             mask_inv = cv2.bitwise_not(mask)
             roi = background_img[y:h, x:w]
@@ -496,7 +508,7 @@ class EditWindow(QWidget):
                 if button == self.complete_btn:
                     fourcc = cv2.VideoWriter_fourcc(*'XVID')
                     out = cv2.VideoWriter('chromakey.avi', fourcc, fps, (600, 400))
-                chromakey = self.th1.video_capture[self.y:self.y + 1, self.x:self.x + 1, :]
+
                 while True:
                     ret, img = cap.read()
                     if ret:
@@ -513,14 +525,16 @@ class EditWindow(QWidget):
                         offset = 20
 
 
-                        hsv_chroma = cv2.cvtColor(chromakey, cv2.COLOR_BGR2HSV)
+                        hsv_chroma = cv2.cvtColor(self.chromakey, cv2.COLOR_BGR2HSV)
                         hsv_img = cv2.cvtColor(for_img, cv2.COLOR_BGR2HSV)
 
                         chroma_h = hsv_chroma[:, :, 0]
                         lower = np.array([chroma_h.min() - offset, 40, 40])
                         upper = np.array([chroma_h.max() + offset, 255, 255])
-                        mask = cv2.inRange(hsv_img, lower, upper)  # 대충 초록 파랑 빨강은 제대로 되는 것 같음.
-                        # mask = cv2.inRange(hsv_img, (0,0,0), (180,255,30)) #검은색
+                        if self.for_black_color.isChecked():
+                            mask = cv2.inRange(hsv_img, (0, 0, 0), (180, 255, 30))  # 검은색
+                        else:
+                            mask = cv2.inRange(hsv_img, lower, upper)  # 대충 초록 파랑 빨강은 제대로 되는 것 같음.
                         mask_inv = cv2.bitwise_not(mask)
                         roi = background_img[y:h, x:w]
                         fg = cv2.bitwise_and(for_img, for_img, mask=mask_inv)

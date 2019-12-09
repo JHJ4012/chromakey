@@ -10,7 +10,7 @@ class MainWindow(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.setFixedSize(1400,800)
+        self.setFixedSize(1400,700)
         self.setWindowTitle('chroma key')
 
         self.chroma_title = QLabel('Chroma Key', self)
