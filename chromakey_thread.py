@@ -4,9 +4,10 @@ import cv2
 
 class Thread(QThread):
 
-    def get_info(self, fileName, QWidget):
+    def get_info(self, fileName, side, QWidget):
         self.fileName = fileName
         self.edit = QWidget
+        self.side = side
         self.while_control = True
         self.capture = cv2.VideoCapture(self.fileName)
         self.fps = self.capture.get(cv2.CAP_PROP_FPS)
@@ -38,8 +39,15 @@ class Thread(QThread):
                 self.for_video_pixmap = QImage(video_capture, width, height, byteValue, QImage.Format_RGB888)
                 pixmap_video = QPixmap.fromImage(self.for_video_pixmap)
 
-                self.edit.video1.setPixmap(pixmap_video)
-                self.edit.slider_video1.setValue(self.capture.get(cv2.CAP_PROP_POS_FRAMES))
+                if self.fileName != 0:
+                        self.edit.video1.setPixmap(pixmap_video)
+                        self.edit.slider_video1.setValue(self.capture.get(cv2.CAP_PROP_POS_FRAMES))
+                else:
+                    if self.side == "L":
+                        self.edit.video1.setPixmap(pixmap_video)
+                    elif self.side == "R":
+                        self.edit.img2.setPixmap(pixmap_video)
+
 
                 if self.recoring == True:
                     print('녹화중')
