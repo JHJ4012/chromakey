@@ -14,16 +14,15 @@ class Thread(QThread):
         self.delay = int(1000 / self.fps)
         self.fourcc = cv2.VideoWriter_fourcc(*'DIVX')
         self.recoring = False
-        if fileName != 0:
+        if self.fileName != 0 and self.side=="L":   #파일 불러오기
             self.edit.slider_video1.setMaximum(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
             self.edit.start_video1.setEnabled(True)
             self.edit.stop_video1.setEnabled(True)
             self.edit.slider_video1.setEnabled(True)
-        else:
-            self.edit.slider_video1.setMaximum(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        elif self.fileName == 0 and self.side=="L":   #카메라
             self.edit.start_video1.setEnabled(False)
             self.edit.stop_video1.setEnabled(False)
-            self.edit.slider_video1.setEnabled(False)
+            # self.edit.slider_video1.setEnabled(False)
 
     def run(self):
         if self.capture:

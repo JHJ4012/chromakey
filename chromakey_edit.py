@@ -165,11 +165,12 @@ class EditWindow(QWidget):
         self.preview_btn = QPushButton('미리보기', self)
         self.preview_btn.setGeometry(1140,730,100,50)
         self.preview_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.preview_btn.clicked.connect(self.showPreview)
+        self.preview_btn.clicked.connect(lambda state, button=self.preview_btn: self.make_Chromakey(state, button))
 
         self.complete_btn = QPushButton('저장', self)
         self.complete_btn.setGeometry(1250, 730, 100, 50)
         self.complete_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.complete_btn.clicked.connect(lambda state, button=self.complete_btn: self.make_Chromakey(state, button))
 
         self.error_label = QLabel('', self)
         self.error_label.setGeometry(860, 730, 270, 50)
@@ -231,7 +232,6 @@ class EditWindow(QWidget):
         if button == self.for_file_btn1:
             if self.radio1_photo.isChecked():
                 fileName, _ = QFileDialog.getOpenFileName(self, "불러올 이미지 ㄱㄱ", "", "Image Files (*.jpg *.png)")
-
                 if fileName:
                     self.for_cvImage1 = cv2.imread(fileName)                    #opencv로 파일 불러옴
                     cvImage1 = cv2.resize(self.for_cvImage1, (600,400))    #불러온 파일 resize
@@ -253,9 +253,9 @@ class EditWindow(QWidget):
 
         elif button == self.for_file_btn2:
 
-            self.fileName, _ = QFileDialog.getOpenFileName(self, "불러올 이미지 ㄱㄱ", "", "Image Files (*.jpg *.png)")
-            if self.fileName:
-                self.for_cvImage2 = cv2.imread(self.fileName)
+            self.fileName_R, _ = QFileDialog.getOpenFileName(self, "불러올 이미지 ㄱㄱ", "", "Image Files (*.jpg *.png)")
+            if self.fileName_R:
+                self.for_cvImage2 = cv2.imread(self.fileName_R)
                 cvImage2 = cv2.resize(self.for_cvImage2, (600,400))
                 height, width, byteValue = cvImage2.shape
                 byteValue = byteValue * width
@@ -321,13 +321,16 @@ class EditWindow(QWidget):
 
         control = path.split('.')[1]
         if control == 'jpg':
-            self.fileName = path
+            if side == "L":
+                self.fileName_L = path
+            elif side == "R":
+                self.fileName_R = path
         elif control == 'mp4':
             self.fileName1 = path
 
         if control == 'jpg':  # 사진 찍었을 때
             if side == "L":
-                self.for_cvImage1 = cv2.imread(self.fileName)  # opencv로 파일 불러옴
+                self.for_cvImage1 = cv2.imread(self.fileName_L)  # opencv로 파일 불러옴
                 cvImage1 = cv2.resize(self.for_cvImage1, (600, 400))
                 height, width, byteValue = cvImage1.shape  # 불러온 파일 정보 변수에 담기
                 byteValue = byteValue * width
@@ -339,7 +342,7 @@ class EditWindow(QWidget):
             elif side == "R":
                 self.func1.setDisabled(False)
                 self.return_img.setDisabled(False)
-                self.for_cvImage2 = cv2.imread(self.fileName)  # opencv로 파일 불러옴
+                self.for_cvImage2 = cv2.imread(self.fileName_R)  # opencv로 파일 불러옴
                 cvImage2 = cv2.resize(self.for_cvImage2, (600, 400))
                 height, width, byteValue = cvImage2.shape  # 불러온 파일 정보 변수에 담기
                 byteValue = byteValue * width
@@ -359,7 +362,7 @@ class EditWindow(QWidget):
             self.th1.start()
 
     def effects(self, state, button):
-        for_cvImage1 = cv2.imread(self.fileName)
+        for_cvImage1 = cv2.imread(self.fileName_R)
         cvImage1 = cv2.resize(for_cvImage1, (600, 400))
         height, width, byteValue = cvImage1.shape
         byteValue = byteValue * width
@@ -412,11 +415,6 @@ class EditWindow(QWidget):
             self.hide()
             self.first_window.show()        #back 했을 때에 no 누르면 first_window 뜸. 안 떠야됨
 
-    def showPreview(self):              #preview로 갈 때 창이 꺼지지 않고 layout에서 widget이 바뀌는 형식으로 바꿈.
-        # self.preview_window = chromakey_preview.PreviewWindow()
-        # self.preview_window.show()
-        self.make_Chromakey()
-
     def closeEvent(self, event):
         reply = QMessageBox.question(self, 'Window Close', 'You really want to close the window?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
@@ -425,7 +423,7 @@ class EditWindow(QWidget):
         else:
             event.ignore()
 
-    def make_Chromakey(self):
+    def make_Chromakey(self, state, button):
         if self.radio1_photo.isChecked():
 
             if not self.img1.pixmap():                                      #예외처리 부분
@@ -470,7 +468,11 @@ class EditWindow(QWidget):
             fg = cv2.bitwise_and(main_img, main_img, mask=mask_inv)
             bg = cv2.bitwise_and(roi, roi, mask=mask)
             background_img[y:h, x:w] = fg + bg
-            cv2.imshow('dfdf', background_img)
+
+            if button == self.preview_btn:
+                cv2.imshow('preview', background_img)
+            elif button == self.complete_btn:
+                cv2.imwrite("chromakey_img.jpg", background_img)
 
         elif self.radio1_video.isChecked():
             
@@ -491,10 +493,11 @@ class EditWindow(QWidget):
             if cap.isOpened():
                 fps = cap.get(cv2.CAP_PROP_FPS)
                 delay = int(1000 / fps)
+                if button == self.complete_btn:
+                    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+                    out = cv2.VideoWriter('chromakey.avi', fourcc, fps, (600, 400))
                 chromakey = self.th1.video_capture[self.y:self.y + 1, self.x:self.x + 1, :]
                 while True:
-                    if (cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT)):
-                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     ret, img = cap.read()
                     if ret:
                         for_img = cv2.resize(img, (600, 400))
@@ -523,7 +526,15 @@ class EditWindow(QWidget):
                         fg = cv2.bitwise_and(for_img, for_img, mask=mask_inv)
                         bg = cv2.bitwise_and(roi, roi, mask=mask)
                         for_img[y:h, x:w] = fg + bg
-                        cv2.imshow('dfdf', for_img)
+                        if button == self.preview_btn:
+                            cv2.imshow('preview(Push the ESC on your keyboard for shut down)', for_img)
+                            if (cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT)):
+                                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        elif button == self.complete_btn:
+                            out.write(for_img)
+                            if (cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT)):
+                                break
+
                         k = cv2.waitKey(delay) & 0xFF
                         if k == 27:
                             break
@@ -532,4 +543,4 @@ class EditWindow(QWidget):
             else:
                 print("can't open video")
             cap.release()
-            # cap.destroyAllWindows()
+            # cap.destroyWindow()
