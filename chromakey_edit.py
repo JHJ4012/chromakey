@@ -491,7 +491,7 @@ class EditWindow(QWidget):
             if cap.isOpened():
                 fps = cap.get(cv2.CAP_PROP_FPS)
                 delay = int(1000 / fps)
-
+                chromakey = self.th1.video_capture[self.y:self.y + 1, self.x:self.x + 1, :]
                 while True:
                     if (cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT)):
                         cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
@@ -508,8 +508,7 @@ class EditWindow(QWidget):
                         # HSV로 바꾸니까 색깔이 반전되서 다른 색이 되버림. 그래서 안 되는거.
                         # 배경색을 빨강, 초록, 파랑으로 제한시키는것은??
                         offset = 20
-                        chromakey = for_img[self.y:self.y + 1, self.x:self.x + 1, :]
-                        # chromakey = for_img[0:10, 0:10, :]
+
 
                         hsv_chroma = cv2.cvtColor(chromakey, cv2.COLOR_BGR2HSV)
                         hsv_img = cv2.cvtColor(for_img, cv2.COLOR_BGR2HSV)

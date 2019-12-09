@@ -31,12 +31,12 @@ class Thread(QThread):
                 if (self.capture.get(cv2.CAP_PROP_POS_FRAMES) == self.capture.get(cv2.CAP_PROP_FRAME_COUNT)):
                     break
                 ret, self.frame = self.capture.read()
-                video_capture = cv2.resize(self.frame, (600, 400))
-                height, width, byteValue = video_capture.shape
+                self.video_capture = cv2.resize(self.frame, (600, 400))
+                height, width, byteValue = self.video_capture.shape
                 byteValue = byteValue * width
-                cv2.cvtColor(video_capture, cv2.COLOR_BGR2RGB, video_capture)
+                cv2.cvtColor(self.video_capture, cv2.COLOR_BGR2RGB, self.video_capture)
 
-                self.for_video_pixmap = QImage(video_capture, width, height, byteValue, QImage.Format_RGB888)
+                self.for_video_pixmap = QImage(self.video_capture, width, height, byteValue, QImage.Format_RGB888)
                 pixmap_video = QPixmap.fromImage(self.for_video_pixmap)
 
                 if self.fileName != 0:
